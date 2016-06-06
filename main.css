@@ -1,0 +1,9 @@
+body {
+  font-family: "Lucida Grande", "Arial", sans-serif;
+  font-size: 16px;
+}
+
+#controlBox {
+  border: 1px solid black;
+  padding: 5px;
+}

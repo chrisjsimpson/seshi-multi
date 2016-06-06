@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+<link rel="stylesheet" href="main.css" type="text/css" media="all">
+<script src="js/adapter.js"></script>
+<script src="js/js.js"></script>
+
+
+<div id="controlBox">
+    <label for="peerKey">Enter another peer key:
+        <input type="text" name="peerKey" id="peerKey" placeholder="peer's key"
+            size="60" />
+    </label>
+    <button id="connectPeer" name="connectPeer">
+        Connect Peer
+    </button>
+</div><!-- end controlBox -->
+
+<div id="stats">
+<p>Number of connected peers: <span id="numConnectedPeers">0</span></p>
+<p>After establishing a peer connection, each peer will query each other
+for any additional peers so they can 'learn' of other potential peers to
+connect to.</p>
+<p>(A peer may already be connected to other nodes, for example)</p>
+<p>If additional potential peers are learnt about, the signaling process
+<em>between peers</em> kicks in, and additional peer connections are 
+established amongst all the peers it knows about.</p>
+
+<h4>Current peer connections</h4>
+<pre>
+KeyUsed    NodeId    LastSeen
+</pre>
+
+
+</div><!-- end stats -->
+
+</body>
+</html>
