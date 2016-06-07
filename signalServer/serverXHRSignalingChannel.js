@@ -30,9 +30,9 @@ function webrtcError(err, res) {
 
 // handle XML HTTP Request to connect using a given key
 function connect(info) {
-debugger;
-  var res = info.res,
-      query = info.query,
+  var res = info.res;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  var query = info.query,
       thisconnection,
       newID = function() {
         // create large random number unlikely to be repeated
@@ -88,6 +88,8 @@ function sendMessage(info) {
   var postData = JSON.parse(info.postData),
       res = info.res;
 
+  res.setHeader("Access-Control-Allow-Origin", "*"); //Allow CORS
+
   if (typeof postData === "undefined") {
     webrtcError("No posted data in JSON format!", res);
     return;
@@ -123,6 +125,7 @@ exports.send = sendMessage;
 function getMessages(info) {
   var postData = JSON.parse(info.postData),
       res = info.res;
+  res.setHeader("Access-Control-Allow-Origin", "*"); //Allow CORS
 
   if (typeof postData === "undefined") {
     webrtcError("No posted data in JSON format!", res);
