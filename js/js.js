@@ -43,14 +43,10 @@ function startup() {
 			});
 	//Create peers data channel and establish its event listeners
 	var peerIndex = localConnections.length - 1;
+    //Listen for datachannel additions from remote
+    localConnections[peerIndex].connection.ondatachannel = receiveChannelCallback; //TODO should only do if we waited.
 	// On ice candidate handler
 	localConnections[peerIndex].connection.onicecandidate = sendIceCandidateToSignalServer;
-	//Add datachannel to peers RTCPeerConnection
-	localConnections[peerIndex].sendChannel = localConnections[peerIndex].connection.createDataChannel("sendChannel");
-	localConnections[peerIndex].sendChannel.onopen = handleSendChannelStatusChange;
-	localConnections[peerIndex].sendChannel.onmessage = handleReceiveMessage;
-	localConnections[peerIndex].sendChannel.ondatachannel = receiveChannelCallback = function() {alert('receiveChannelCallback');}; //TODO should only do if we waited.
-	localConnections[peerIndex].sendChannel.onclose = handleSendChannelStatusChange;
 
 	  var errorCB, scHandlers, handleMsg;
       var key = document.getElementById('peerKey').value;
@@ -64,16 +60,14 @@ function startup() {
 		console.log(msg);
 		// Then, we take action based on the kind of message
 		if (msg.type === "offer") {
-		  localConnections[peerIndex].connection.setRemoteDescription(new RTCSessionDescription(msg,
-							function(){console.log("Sucess setRemoteDescription offer on connect()..");},
-							function(){console.log("Failed setRemoteDescription offer on connect()...");}));
-		  //Answer offer from remote peer
-		  localConnections[peerIndex].connection.createAnswer()
+		  localConnections[peerIndex].connection.setRemoteDescription(msg)
+		  .then(() => localConnections[peerIndex].connection.createAnswer())
 		  .then(function(answer){
 			sendIceAnswerToSignalServer(answer, function(){console.log("In sendIceAnswerToSignalServer Sending answer to an offer received.");});
 			//Set local description for this peer (the remote connecting peer)
 			localConnections[peerIndex].connection.setLocalDescription(answer);
-		  });
+		  })
+		.catch(function(error) { console.error("There was an error processing offer from signal server: " + error);});
 		  //answer();
 		} else if (msg.type === "answer") {
 		  localConnections[peerIndex].connection.setRemoteDescription(new RTCSessionDescription(msg,
@@ -87,12 +81,32 @@ function startup() {
 					function(){console.log("error accing iceCanditation on connect() call..");});
 		}
 	  };
+
+function receiveChannelCallback(event) {
+	console.log("in receiveChannelCallback");
+   localConnections[peerIndex].receiveChannel = event.channel;
+   localConnections[peerIndex].receiveChannel.onmessage = handleReceiveMessage;
+   localConnections[peerIndex].receiveChannel.onopen = handleReceiveChannelStatusChange;
+   localConnections[peerIndex].receiveChannel.onclose = handleReceiveChannelStatusChange;
+  }
+
+function handleReceiveChannelStatusChange(event) {
+      console.log("Receive channel's status has changed to ");
+	  console.log(event);
+                  //receiveChannel.readyState (change to access localConnectionsArray
+  }
+
 	  // handlers for signaling channel
 	  scHandlers = {
 		'onWaiting' : function () {
 		  console.log("Status: Waiting");
 		  // weWaited will be used for auto-call
 		  weWaited = true;
+	//Add datachannel to peers RTCPeerConnection (only starting peer creates the datachannel, connecting peer reacts to its presense.
+	localConnections[peerIndex].sendChannel = localConnections[peerIndex].connection.createDataChannel("sendChannel"); //TODO ONLY DO THIS FOR CONNECTING PEER DUH!
+	localConnections[peerIndex].sendChannel.onopen = handleSendChannelStatusChange;
+	localConnections[peerIndex].sendChannel.onmessage = handleReceiveMessage;
+	localConnections[peerIndex].sendChannel.onclose = handleSendChannelStatusChange;
 		},
 		'onConnected': function () {
 		  console.log("Status: Connected");
@@ -124,6 +138,7 @@ function startup() {
         // Create an offer to connect (if we waited); this starts the process
 		if ( weWaited ) 
 		{
+			alert('Sending offer!');
 			localConnections[peerIndex].connection.createOffer()
 			.then(function(offer)
 				{
@@ -246,9 +261,5 @@ function sendIceCandidateToSignalServer(msg, responseHandler) {
 }//End sendIceCandidateToSignalServer(msg)
 
 function handleReceiveMessage(event) {
-    var el = document.createElement("p");
-    var txtNode = document.createTextNode(event.data);
-    
-    el.appendChild(txtNode);
-    receiveBox.appendChild(el);
+    console.log(event.data);
   }
