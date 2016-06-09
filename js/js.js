@@ -58,9 +58,10 @@ function startup() {
         // Then, we take action based on the kind of message
         if (msg.type === "offer") {
             console.log("Received an offer");
-              answer(msg);
+              answerOffer(msg);
             } else if (msg.type === "answer") {
               console.log("Received an answer");
+              saveAnswer(msg); 
             } else if (msg.type === "candidate") {
               console.log("Received a candidate");
             }
@@ -220,7 +221,7 @@ function connectPeers(peerIndex) {
 
 }//End connectPeers()
 
-function answer(offer) {
+function answerOffer(offer) {
     localConnections[localConnections.length-1].rtcConnection.onicecandidate = sendIceCandidates;
     //Set remote description
     localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer)
@@ -228,7 +229,12 @@ function answer(offer) {
     .then(answer => localConnections[localConnections.length-1].rtcConnection.setLocalDescription(answer))
     .catch(function(error){console.error("Error in answer()" + error);});
 
-}//End answer
+}//End answerOffer
+
+function saveAnswer(answer) {
+    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(answer)
+    .catch(function(error){console.error("Error in saveAnswer" + error);});
+}//End saveAnswer()
 
 function sendIceCandidates(event) {
     console.log("Caller candidate:");
