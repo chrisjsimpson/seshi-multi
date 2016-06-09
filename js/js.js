@@ -58,7 +58,7 @@ function startup() {
         // Then, we take action based on the kind of message
         if (msg.type === "offer") {
             console.log("Received an offer");
-              //answer();
+              answer(msg);
             } else if (msg.type === "answer") {
               console.log("Received an answer");
             } else if (msg.type === "candidate") {
@@ -232,4 +232,17 @@ function connectPeers(peerIndex) {
     }//End sendIceCandidates()
 
 }//End connectPeers()
+
+function answer(offer) {
+    //Set remote description
+    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer).
+    then(function(){});
+    //Generate answer
+
+    //Gather answer SDPs
+
+    //Set localDescription
+
+    //Send all SDPs
+}//End answer
 
