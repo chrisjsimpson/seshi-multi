@@ -10,7 +10,6 @@ var peerKey = null;
      * localConnections is an array of peer IDs & RTCPeerConnection objects
     */
 var localConnections = null; //RTCPeerConnections for local RTCPeerConnection objects
-var remoteConnections = null;//RTCPeerConnections for remote RTCPeerConnections objects
 
 var sendChannels = null; // RTCDataChannels for the local (senders)
 var receiveChannels = null; // RTCDataChannel for the remote (receivers)
@@ -203,6 +202,10 @@ function connectPeers(peerIndex) {
     function caller() {
         //Create datachannel
         localConnections[peerIndex].sendChannel = localConnections[peerIndex].rtcConnection.createDataChannel("sendChannel");
+        localConnections[peerIndex].sendChannel.onopen = handleReceiveChannelStatusChange;
+        localConnections[peerIndex].sendChannel.onmessage = handleReceiveMessage;
+        localConnections[peerIndex].sendChannel.onclose = handleReceiveChannelStatusChange
+
         localConnections[peerIndex].rtcConnection.onicecandidate = sendIceCandidates;
         //Create offer
         localConnections[peerIndex].rtcConnection.createOffer()
@@ -215,7 +218,11 @@ function connectPeers(peerIndex) {
         //Receive datachannel
         localConnections[peerIndex].rtcConnection.ondatachannel = receivedDataChannel;
         function receivedDataChannel(event) {
-
+            console.log(event);
+            localConnections[peerIndex].sendChannel = event.channel;
+            localConnections[peerIndex].sendChannel.onopen = handleReceiveChannelStatusChange;
+            localConnections[peerIndex].sendChannel.onmessage = handleReceiveMessage;
+            localConnections[peerIndex].sendChannel.onclose = handleReceiveChannelStatusChange
         }//End receivedDataChannel()
     }//End recipient()
 
@@ -249,3 +256,11 @@ function sendIceCandidates(event) {
     }//End check iceGathering is complted before sending offer.
 }//End sendIceCandidates()
 
+function handleReceiveChannelStatusChange(event) {
+    console.log(event);
+    if (event.type == 'open') {
+        var numPeersElm = document.getElementById('numConnectedPeers');
+        numPeersElm.textContent = parseInt(numPeersElm.textContent) + 1;
+    }
+};//End handleReceiveChannelStatusChange()
+function handleReceiveMessage(event) {console.log(event);};
