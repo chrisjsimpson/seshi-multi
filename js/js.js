@@ -101,6 +101,7 @@ function startup() {
     *  channel createdby calling connect()
     */
         var peerKey = document.getElementById('peerKey').value;
+        console.log("Time to start setting us peer connections using established signaling channel");
 
     }//End connectPeers()
 
