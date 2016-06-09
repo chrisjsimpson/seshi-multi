@@ -40,7 +40,8 @@ function startup() {
         localConnections.push(
                 {
                 peerKey: peerKey,
-                rtcConnection: new RTCPeerConnection(config)
+                rtcConnection: new RTCPeerConnection(config),
+                isSdpSent:false
                 });
         //Create peers data channel and establish its event listeners
         var peerIndex = localConnections.length - 1;
@@ -77,12 +78,9 @@ function startup() {
                 // set up the RTC Peer Connection since we're connected
                 if (localConnections[peerIndex].weWaited === undefined ) 
                 {
-                    
                     localConnections[peerIndex].weWaited = false;
-                    recipient(peerIndex);
-                } else {
-                    caller(peerIndex);
-                }//End call caller()
+                }
+                connectPeers(peerIndex);
             },
             'onMessage': handleMsg
         };
@@ -95,17 +93,6 @@ function startup() {
         // and connect.
         localConnections[peerIndex].signalingChannel.connect(errorCB);
     }//End connect()
-
-
-    function connectPeers(peerIndex) {
-    /* connectPeers() -Connect local peer to remote using signal server as boot peer 
-    *  Called after both peers have established they are both connected to the signaling
-    *  channel createdby calling connect()
-    */
-        var peerKey = document.getElementById('peerKey').value;
-        console.log("Time to start setting us peer connections using established signaling channel");
-
-    }//End connectPeers()
 
 }//End startup()
 
@@ -204,24 +191,44 @@ function sendIceCandidateToSignalServer(msg, responseHandler) {
 }//End sendIceCandidateToSignalServer(msg)
 
 
-function caller(peerIndex) {
-    //Create datachannel
-    localConnections[peerIndex].sendChannel = localConnections[peerIndex].rtcConnection.createDataChannel("sendChannel");
-    localConnections[peerIndex].rtcConnection.onicecandidate = callerCandidate;
-    //Create offer
-    localConnections[peerIndex].rtcConnection.createOffer()
-    .then(offer => localConnections[peerIndex].rtcConnection.setLocalDescription(offer))
-    .catch(function(error){console.log("Error in caller: " + error);});
-    function callerCandidate(event) {
+function connectPeers(peerIndex) {
+    if ( localConnections[peerIndex].weWaited == true )
+    {
+        caller();
+    } else {
+        recipient();
+    }
+
+    function caller() {
+        //Create datachannel
+        localConnections[peerIndex].sendChannel = localConnections[peerIndex].rtcConnection.createDataChannel("sendChannel");
+        localConnections[peerIndex].rtcConnection.onicecandidate = sendIceCandidates;
+        //Create offer
+        localConnections[peerIndex].rtcConnection.createOffer()
+        .then(offer => localConnections[peerIndex].rtcConnection.setLocalDescription(offer))
+        .catch(function(error){console.log("Error in caller: " + error);});
+
+    }//End caller()
+
+    function recipient() {
+        //Receive datachannel
+        localConnections[peerIndex].rtcConnection.ondatachannel = receivedDataChannel;
+        function receivedDataChannel(event) {
+
+        }//End receivedDataChannel()
+    }//End recipient()
+
+    function sendIceCandidates(event) {
         console.log("Caller candidate:");
         console.log(event.candidate);
-    }
-}//End caller()
+        //Send caller's entire SDP collection to signal server (the callers localDescription)
+        if ( localConnections[peerIndex].rtcConnection.iceGatheringState == 'complete')
+        {
+            if (localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent) return;
+            localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent = true;
+            console.log("Ready to send entire callers SDP to signal server."); 
+        }
+    }//End sendIceCandidates()
 
-function recipient(peerIndex) {
-    //Receive datachannel
-    localConnections[peerIndex].rtcConnection.ondatachannel = receivedDataChannel;
-    function receivedDataChannel(event) {
+}//End connectPeers()
 
-    }//End receivedDataChannel()
-}//End recipient()
