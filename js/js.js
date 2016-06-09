@@ -109,7 +109,7 @@ function sendIceOfferToSignalServer(msg, responseHandler) {
     //client.open("POST","http://localhost:5001/send");
     client.open("POST","http://localhost:5001/send");
     var sendData = {"id":window.id, 
-                    "message":msg.candidate
+                    "message":new RTCSessionDescription(msg)
                    };
     client.send(JSON.stringify(sendData));
     function handler() {
@@ -227,7 +227,8 @@ function connectPeers(peerIndex) {
             if (localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent) return;
             localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent = true;
             console.log("Ready to send entire callers SDP to signal server."); 
-        }
+            sendIceOfferToSignalServer(localConnections[peerIndex].rtcConnection.localDescription);
+        }//End check iceGathering is complted before sending offer.
     }//End sendIceCandidates()
 
 }//End connectPeers()
