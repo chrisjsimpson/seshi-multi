@@ -206,7 +206,7 @@ function connectPeers(peerIndex) {
         //Create offer
         localConnections[peerIndex].rtcConnection.createOffer()
         .then(offer => localConnections[peerIndex].rtcConnection.setLocalDescription(offer))
-        .catch(function(error){console.log("Error in caller: " + error);});
+        .catch(function(error){console.error("Error in caller: " + error);});
 
     }//End caller()
 
@@ -218,31 +218,28 @@ function connectPeers(peerIndex) {
         }//End receivedDataChannel()
     }//End recipient()
 
-    function sendIceCandidates(event) {
-        console.log("Caller candidate:");
-        console.log(event.candidate);
-        //Send caller's entire SDP collection to signal server (the callers localDescription)
-        if ( localConnections[peerIndex].rtcConnection.iceGatheringState == 'complete')
-        {
-            if (localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent) return;
-            localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent = true;
-            console.log("Ready to send entire callers SDP to signal server."); 
-            sendIceOfferToSignalServer(localConnections[peerIndex].rtcConnection.localDescription);
-        }//End check iceGathering is complted before sending offer.
-    }//End sendIceCandidates()
-
 }//End connectPeers()
 
 function answer(offer) {
+    localConnections[localConnections.length-1].rtcConnection.onicecandidate = sendIceCandidates;
     //Set remote description
-    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer).
-    then(function(){});
-    //Generate answer
+    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer)
+    .then(() => localConnections[localConnections.length-1].rtcConnection.createAnswer())
+    .then(answer => localConnections[localConnections.length-1].rtcConnection.setLocalDescription(answer))
+    .catch(function(error){console.error("Error in answer()" + error);});
 
-    //Gather answer SDPs
-
-    //Set localDescription
-
-    //Send all SDPs
 }//End answer
+
+function sendIceCandidates(event) {
+    console.log("Caller candidate:");
+    console.log(event.candidate);
+    //Send caller's entire SDP collection to signal server (the callers localDescription)
+    if ( localConnections[localConnections.length-1].rtcConnection.iceGatheringState == 'complete')
+    {
+        if (localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent) return;
+        localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent = true;
+        console.log("Ready to send entire callers SDP to signal server."); 
+        sendIceOfferToSignalServer(localConnections[localConnections.length-1].rtcConnection.localDescription);
+    }//End check iceGathering is complted before sending offer.
+}//End sendIceCandidates()
 
