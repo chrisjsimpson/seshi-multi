@@ -40,7 +40,7 @@ function startup() {
         localConnections.push(
                 {
                 peerKey: peerKey,
-                connection: new RTCPeerConnection(config)
+                rtcConnection: new RTCPeerConnection(config)
                 });
         //Create peers data channel and establish its event listeners
         var peerIndex = localConnections.length - 1;
@@ -75,12 +75,14 @@ function startup() {
             'onConnected': function () {
                 console.log("Status: Connected");
                 // set up the RTC Peer Connection since we're connected
-                //createPC();
                 if (localConnections[peerIndex].weWaited === undefined ) 
                 {
+                    
                     localConnections[peerIndex].weWaited = false;
-                }
-                connectPeers(peerIndex);
+                    recipient(peerIndex);
+                } else {
+                    caller(peerIndex);
+                }//End call caller()
             },
             'onMessage': handleMsg
         };
@@ -201,3 +203,25 @@ function sendIceCandidateToSignalServer(msg, responseHandler) {
     }//End handler();
 }//End sendIceCandidateToSignalServer(msg)
 
+
+function caller(peerIndex) {
+    //Create datachannel
+    localConnections[peerIndex].sendChannel = localConnections[peerIndex].rtcConnection.createDataChannel("sendChannel");
+    localConnections[peerIndex].rtcConnection.onicecandidate = callerCandidate;
+    //Create offer
+    localConnections[peerIndex].rtcConnection.createOffer()
+    .then(offer => localConnections[peerIndex].rtcConnection.setLocalDescription(offer))
+    .catch(function(error){console.log("Error in caller: " + error);});
+    function callerCandidate(event) {
+        console.log("Caller candidate:");
+        console.log(event.candidate);
+    }
+}//End caller()
+
+function recipient(peerIndex) {
+    //Receive datachannel
+    localConnections[peerIndex].rtcConnection.ondatachannel = receivedDataChannel;
+    function receivedDataChannel(event) {
+
+    }//End receivedDataChannel()
+}//End recipient()
