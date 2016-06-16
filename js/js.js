@@ -108,7 +108,6 @@ function sendIceOfferToSignalServer(msg, responseHandler) {
     //open XHR and send connection information to signaling server with peerKey as ID
     var client = new XMLHttpRequest(); 
     client.onreadystatechange = handler;
-    //client.open("POST","http://localhost:5001/send");
     client.open("POST","http://localhost:5001/send");
     var sendData = {"id":window.id, 
                     "message":new RTCSessionDescription(msg)
@@ -128,36 +127,6 @@ function sendIceOfferToSignalServer(msg, responseHandler) {
         }
     }//End handler();
 }//End sendIceOfferToSignalServer(msg)
-
-function sendIceAnswerToSignalServer(msg, responseHandler) {
-    console.log("In sendIceAnswerToSignalServer (msg), msg is:");
-    console.log(msg);
-    console.log("Should send that^ to the signaling server so remote peer can grab it.");
-
-    var reponseHandler = responseHandler || function() {};
-    //open XHR and send connection information to signaling server with peerKey as ID
-    var client = new XMLHttpRequest(); 
-    client.onreadystatechange = handler;
-    //client.open("POST","http://localhost:5001/send");
-    client.open("POST","http://localhost:5001/send");
-    var sendData = {"id":window.id, 
-                    "message":msg
-                   };
-    client.send(JSON.stringify(sendData));
-    function handler() {
-        console.log('In handler() for response from signaling server after sending Answer.');
-        if(this.readyState == this.DONE) {
-            if(this.status == 200 && this.response != null) {
-                var res = JSON.parse(this.response);
-                if (res.err) {
-                    console.error(res.err);
-                    return;
-                }
-                console.log("Response from signal server was: " + res.status);
-            }
-        }
-    }//End handler();
-}//End sendIceAnswerToSignalServer(msg)
 
 
 function sendIceCandidateToSignalServer(msg, responseHandler) {
