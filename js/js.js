@@ -14,7 +14,8 @@ var localConnections = null; //RTCPeerConnections for local RTCPeerConnection ob
 var sendChannels = null; // RTCDataChannels for the local (senders)
 var receiveChannels = null; // RTCDataChannel for the remote (receivers)
 var config = null; //RTCConfiguration https://developer.mozilla.org/en-US/docs/Web/API/RTCConfiguration
-    window.addEventListener('load', startup, false);
+window.addEventListener('load', startup, false);
+
 })()
 
 function startup() {
@@ -108,7 +109,7 @@ function sendIceOfferToSignalServer(msg, pollId, responseHandler) {
     //open XHR and send connection information to signaling server with peerKey as ID
     var client = new XMLHttpRequest(); 
     client.onreadystatechange = handler;
-    client.open("POST","http://localhost:5001/send");
+    client.open("POST", host + "send");
     var sendData = {"id":pollId, 
                     "message":new RTCSessionDescription(msg)
                    };

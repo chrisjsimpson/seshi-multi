@@ -62,7 +62,7 @@ function connect(failureCB, peerIndex) {
   // open XHR and send the connection request with the key
          var client = new XMLHttpRequest();
          client.onreadystatechange = handler;
-         client.open("GET", "http://localhost:5001/connect?key=" + document.getElementById('peerKey').value);
+         client.open("GET", host + "connect?key=" + document.getElementById('peerKey').value);
          client.send();
 }//End connect()
 
@@ -153,7 +153,7 @@ function get(getResponseHandler, peerIndex) {
   // open XHR and request messages for my id
   var client = new XMLHttpRequest();
   client.onreadystatechange = handler;
-  client.open("POST", "http://localhost:5001/get");
+  client.open("POST", host + "get");
   client.send(JSON.stringify({"id":localConnections[peerIndex].rtcConnection.pollId}));
 }
 
@@ -190,7 +190,7 @@ function send(msg, responseHandler, peerIndex) {
   // open XHR and send my id and message as JSON string
   var client = new XMLHttpRequest();
   client.onreadystatechange = handler;
-  client.open("POST", "http://localhost:5001/send");
+  client.open("POST", host + "send");
   var sendData = {"id":localConnections[peerIndex].rtcConnection.pollId, "message":msg};
   client.send(JSON.stringify(sendData));
 }
