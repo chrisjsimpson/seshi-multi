@@ -20,6 +20,7 @@ var config = null; //RTCConfiguration https://developer.mozilla.org/en-US/docs/W
 function startup() {
     /* Startup() - Initial Setup & connect event listeners. */
     console.log("Starting up...");
+    peerIdentity = Math.random() * (99999999999999999999 - 0) + 0;
     connectPeerButton = document.getElementById('connectPeer');
     localConnections = []; //Array of local RTCPeerConnections
     config = {iceServers:new Array()};
@@ -39,6 +40,7 @@ function startup() {
         localConnections.push(
                 {
                 peerKey: peerKey,
+                peerIdentity: peerIdentity,
                 rtcConnection: new RTCPeerConnection(config),
                 isSdpSent:false
                 });
@@ -233,8 +235,8 @@ function answerOffer(offer) {
     //Set remote description
     localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer)
     .then(() => localConnections[localConnections.length-1].rtcConnection.createAnswer())
-    .then(answer => localConnections[localConnections.length-1].rtcConnection.setLocalDescription(answer))
-    .catch(function(error){console.error("Error in answer()" + error);});
+    .then(answer => localConnections[localConnections.length-1].rtcConnection.setLocalDescription(answer)) 
+    .catch(function(error){console.error("Error in answer()" + error);});//setLocalDescription (above, should wait until sendIceCandidates is complete)
 
 }//End answerOffer
 
