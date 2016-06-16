@@ -93,13 +93,13 @@ function startup() {
             console.error("Error was: " + msg);
         };
         // and connect.
-        localConnections[peerIndex].signalingChannel.connect(errorCB);
+        localConnections[peerIndex].signalingChannel.connect(errorCB, peerIndex);
     }//End connect()
 
 }//End startup()
 
 
-function sendIceOfferToSignalServer(msg, responseHandler) {
+function sendIceOfferToSignalServer(msg, pollId, responseHandler) {
     console.log("In sendIceOfferToSignalServer(msg), msg is:");
     console.log(msg);
     console.log("Should send that^ to the signaling server so remote peer can grab it.");
@@ -109,7 +109,7 @@ function sendIceOfferToSignalServer(msg, responseHandler) {
     var client = new XMLHttpRequest(); 
     client.onreadystatechange = handler;
     client.open("POST","http://localhost:5001/send");
-    var sendData = {"id":window.id, 
+    var sendData = {"id":pollId, 
                     "message":new RTCSessionDescription(msg)
                    };
     client.send(JSON.stringify(sendData));
@@ -190,7 +190,8 @@ function sendIceCandidates(event) {
         if (localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent) return;
         localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent = true;
         console.log("Ready to send entire callers SDP to signal server."); 
-        sendIceOfferToSignalServer(localConnections[localConnections.length-1].rtcConnection.localDescription);
+        pollId = event.target.pollId;
+        sendIceOfferToSignalServer(localConnections[localConnections.length-1].rtcConnection.localDescription, pollId);
     }//End check iceGathering is complted before sending offer.
 }//End sendIceCandidates()
 

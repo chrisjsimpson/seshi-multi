@@ -22,7 +22,7 @@ var id, status, doNothing = function(){},
 
 
 // Set up connection with signaling server
-function connect(failureCB) {
+function connect(failureCB, peerIndex) {
   var failureCB = (typeof failureCB === 'function') ||
                   function() {};
 
@@ -39,9 +39,10 @@ function connect(failureCB) {
 
         // if no error, save status and server-generated id,
         // then start asynchronouse polling for messages
-        window.id = res.id;
+        //window.id = res.id;
+        localConnections[peerIndex].rtcConnection.pollId = res.id;
         status = res.status;
-        poll();
+        poll(peerIndex);
 
         // run user-provided handlers for waiting and connected
         // states
@@ -69,7 +70,7 @@ function connect(failureCB) {
 // poll() waits n ms between gets to the server.  n is at 10 ms
 // for 10 tries, then 100 ms for 10 tries, then 1000 ms from then
 // on. n is reset to 10 ms if a message is actually received.
-function poll() {
+function poll(peerIndex) {
   var msgs;
   var pollWaitDelay = (function() {
     var delay = 10, counter = 1;
@@ -119,7 +120,7 @@ function poll() {
 
       // now set timer to check again
       setTimeout(getLoop, pollWaitDelay.value());
-    });
+    }, peerIndex);
   }());
 } //End poll()
 
@@ -128,7 +129,7 @@ function poll() {
 // This function is part of the polling setup to check for
 // messages from the other browser.  It is called by getLoop()
 // inside poll().
-function get(getResponseHandler) {
+function get(getResponseHandler, peerIndex) {
 
   // response should either be error or a JSON object.  If the
   // latter, send it to the user-provided handler.
@@ -153,7 +154,7 @@ function get(getResponseHandler) {
   var client = new XMLHttpRequest();
   client.onreadystatechange = handler;
   client.open("POST", "http://localhost:5001/get");
-  client.send(JSON.stringify({"id":window.id}));
+  client.send(JSON.stringify({"id":localConnections[peerIndex].rtcConnection.pollId}));
 }
 
 
@@ -165,7 +166,7 @@ function handleMessage(msg) {   // process message asynchronously
 
 
 // Send a message to the other browser on the signaling channel
-function send(msg, responseHandler) {
+function send(msg, responseHandler, peerIndex) {
   var reponseHandler = responseHandler || function() {};
 
   // parse response and send to handler
@@ -190,7 +191,7 @@ function send(msg, responseHandler) {
   var client = new XMLHttpRequest();
   client.onreadystatechange = handler;
   client.open("POST", "http://localhost:5001/send");
-  var sendData = {"id":window.id, "message":msg};
+  var sendData = {"id":localConnections[peerIndex].rtcConnection.pollId, "message":msg};
   client.send(JSON.stringify(sendData));
 }
 
