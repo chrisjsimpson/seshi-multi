@@ -167,31 +167,34 @@ function connectPeers(peerIndex) {
 }//End connectPeers()
 
 function answerOffer(offer) {
-    localConnections[localConnections.length-1].rtcConnection.onicecandidate = sendIceCandidates;
+    var peerIndex = getPeerIndexByPollId(offer.pollId);
+    localConnections[peerIndex].rtcConnection.onicecandidate = sendIceCandidates;
     //Set remote description
-    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(offer)
-    .then(() => localConnections[localConnections.length-1].rtcConnection.createAnswer())
-    .then(answer => localConnections[localConnections.length-1].rtcConnection.setLocalDescription(answer)) 
+    localConnections[peerIndex].rtcConnection.setRemoteDescription(offer)
+    .then(() => localConnections[peerIndex].rtcConnection.createAnswer())
+    .then(answer => localConnections[peerIndex].rtcConnection.setLocalDescription(answer)) 
     .catch(function(error){console.error("Error in answer()" + error);});//setLocalDescription (above, should wait until sendIceCandidates is complete)
 
 }//End answerOffer
 
 function saveAnswer(answer) {
-    localConnections[localConnections.length-1].rtcConnection.setRemoteDescription(answer)
+    var peerIndex = getPeerIndexByPollId(answer.pollId); //Double check we've not confused the partner ids here..
+    localConnections[peerIndex].rtcConnection.setRemoteDescription(answer)
     .catch(function(error){console.error("Error in saveAnswer" + error);});
 }//End saveAnswer()
 
 function sendIceCandidates(event) {
     console.log("Caller candidate:");
     console.log(event.candidate);
+    var peerIndex = getPeerIndexByPollId(event.currentTarget.pollId);
     //Send caller's entire SDP collection to signal server (the callers localDescription)
-    if ( localConnections[localConnections.length-1].rtcConnection.iceGatheringState == 'complete')
+    if ( localConnections[peerIndex].rtcConnection.iceGatheringState == 'complete')
     {
-        if (localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent) return;
-        localConnections[localConnections.length-1].rtcConnection.iceGatheringState.isSdpSent = true;
+        if (localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent) return;
+        localConnections[peerIndex].rtcConnection.iceGatheringState.isSdpSent = true;
         console.log("Ready to send entire callers SDP to signal server."); 
         pollId = event.target.pollId;
-        sendIceOfferToSignalServer(localConnections[localConnections.length-1].rtcConnection.localDescription, pollId);
+        sendIceOfferToSignalServer(localConnections[peerIndex].rtcConnection.localDescription, pollId);
     }//End check iceGathering is complted before sending offer.
 }//End sendIceCandidates()
 
@@ -203,3 +206,27 @@ function handleReceiveChannelStatusChange(event) {
     }
 };//End handleReceiveChannelStatusChange()
 function handleReceiveMessage(event) {console.log(event);};
+
+function getPeerIndexByPollId(pollId){
+    for (var i=0; i< localConnections.length; i++) {
+    if ( localConnections[i].rtcConnection.pollId == pollId )
+    return i;
+    }
+}//End getPeerIndexByPollId(pollId)
+
+function listConnections() {
+	if (localConnections.length == 0)
+	return console.log("There are zero connections.");
+	for (var i=0; i<localConnections.length;i++)
+	{
+		if (localConnections[i].sendChannel == undefined) {
+			datachannelState = '(Datachannel not created yet.)';
+		} else {
+			datachannelState = localConnections[i].sendChannel.readyState; 
+		}
+		console.log( i + '# ' + 
+			'Peer identity: "' +  localConnections[i].peerIdentity + '"' +
+			' Connection state: "' + datachannelState + '"' + 
+		' Key used: "' + localConnections[i].peerKey + '"');
+	}
+}//End listConnectedPeers

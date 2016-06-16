@@ -52,7 +52,7 @@ function connect(info) {
         thisconnection.status = "waiting";
         thisconnection.ids = [newID()];
         webrtcResponse({"id":thisconnection.ids[0],
-                        "status":thisconnection.status}, res);
+                        "status":thisconnection.status,"pollId":thisconnection.ids[0]}, res);
       },
       connectSecondParty = function() {
         thisconnection.ids[1] = newID();
@@ -87,7 +87,8 @@ function sendMessage(info) {
   log("postData received is ***" + info.postData + "***");
   var postData = JSON.parse(info.postData),
       res = info.res;
-
+  //So polling peer can distinguish peers, include pollId
+  postData.message.pollId = partner[postData.id];
   res.setHeader("Access-Control-Allow-Origin", "*"); //Allow CORS
 
   if (typeof postData === "undefined") {
@@ -111,6 +112,7 @@ function sendMessage(info) {
     webrtcError("Invalid id " + postData.id, res);
     return;
   }
+  debugger;
   messagesFor[partner[postData.id]].push(postData.message);
   log("Saving message ***" + postData.message +
       "*** for delivery to id " + partner[postData.id]);
@@ -143,7 +145,7 @@ function getMessages(info) {
   log("Sending messages ***" +
       JSON.stringify(messagesFor[postData.id]) + "*** to id " +
       postData.id);
-  webrtcResponse({'msgs':messagesFor[postData.id]}, res);
+  webrtcResponse({'msgs':messagesFor[postData.id], "pollId":postData.id}, res);
   messagesFor[postData.id] = [];
 }
 exports.get = getMessages;
