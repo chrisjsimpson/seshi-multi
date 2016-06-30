@@ -10,7 +10,6 @@ var peerKey = null;
      * localConnections is an array of peer IDs & RTCPeerConnection objects
     */
 var localConnections = null; //RTCPeerConnections for local RTCPeerConnection objects
-
 var sendChannels = null; // RTCDataChannels for the local (senders)
 var receiveChannels = null; // RTCDataChannel for the remote (receivers)
 var config = null; //RTCConfiguration https://developer.mozilla.org/en-US/docs/Web/API/RTCConfiguration
@@ -41,7 +40,7 @@ function startup() {
         localConnections.push(
                 {
                 peerKey: peerKey,
-                peerIdentity: peerIdentity,
+                remotePeerIdentity: null,
                 rtcConnection: new RTCPeerConnection(config),
                 isSdpSent:false
                 });
@@ -202,11 +201,28 @@ function sendIceCandidates(event) {
 function handleReceiveChannelStatusChange(event) {
     console.log(event);
     if (event.type == 'open') {
-        var numPeersElm = document.getElementById('numConnectedPeers');
-        numPeersElm.textContent = parseInt(numPeersElm.textContent) + 1;
+        var peerIndex = getPeerIndexByCallSite(this);
+        sendPeerIdentity(peerIndex, {"msgType":"setPeerIdentity", 'data':{"peerIdentity":peerIdentity}});
     }
 };//End handleReceiveChannelStatusChange()
-function handleReceiveMessage(event) {console.log(event);};
+
+function handleReceiveMessage(event) {
+    var peerIndex = getPeerIndexByCallSite(this);
+    console.log("Just got a message from peer: " + peerIndex);
+    //Parse message and act depending on type
+    var msg = JSON.parse(event.data);
+    switch(msg.msgType) 
+    {
+        case 'setPeerIdentity':
+            setRemotePeerIdentity(peerIndex, msg.data.peerIdentity);
+        break;
+        
+        default:
+            console.log("No handler for message recieved: " + msg);
+        
+    }
+    console.log(event);
+};//End handleReceiveMessage
 
 function getPeerIndexByPollId(pollId){
     for (var i=0; i< localConnections.length; i++) {
@@ -231,3 +247,48 @@ function listConnections() {
 		' Key used: "' + localConnections[i].peerKey + '"');
 	}
 }//End listConnectedPeers
+
+function getPeerIndexByCallSite(calledObj) {
+    /* When passed an RTCDataChannel event, this 
+    *  method returns the localConnections index 
+    *  of the call.
+    */
+    for (var i=0;i<localConnections.length;i++)
+    {
+        if(localConnections[i].sendChannel === calledObj)
+        {
+                return i;//Return matching datachannel peer index
+        }
+    }
+}//End getPeerIndexByCallSite
+
+function sendPeerIdentity(peerIndex, msg){
+    var msg = JSON.stringify(msg);
+    localConnections[peerIndex].sendChannel.send(msg);
+}//end sendPeerIdentity
+
+function setRemotePeerIdentity(peerIndex, remotePeerIdentity) {
+    //Check we're not already connected to this remote peer
+    if(!checkAlreadyConnectedToPeer(remotePeerIdentity))
+	{
+   		localConnections[peerIndex].remotePeerIdentity = remotePeerIdentity;
+        var numPeersElm = document.getElementById('numConnectedPeers');
+        numPeersElm.textContent = parseInt(numPeersElm.textContent) + 1;
+	} else {
+		//Disconnect this excess connection
+		localConnections[peerIndex].sendChannel.close();//Close Datachannel
+		localConnections[peerIndex].rtcConnection.close();//Close rtcConnection
+	}
+}//setRemotePeerIdentity
+
+function checkAlreadyConnectedToPeer(remotePeerIdentity)
+{
+    for (var i=0;i<localConnections.length;i++)
+    {
+        if(localConnections[i].remotePeerIdentity == remotePeerIdentity)
+        {
+                return true; //Return matching peer index
+        }
+    }
+		return false;
+}//End checkAlreadyConnectedToPeer(remotePeerIdentity)
