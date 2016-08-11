@@ -4,5 +4,5 @@ var live = false;
 if (live) {
     host = 'https://multi.seshi.io/';
 } else {
-    host = 'http://localhost:5001/';
+    host = 'http://10.80.30.116:5001/';
 }//End not live

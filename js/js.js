@@ -232,8 +232,12 @@ function getPeerIndexByPollId(pollId){
 }//End getPeerIndexByPollId(pollId)
 
 function listConnections() {
-	if (localConnections.length == 0)
-	return console.log("There are zero connections.");
+    var statsText= '';
+	if (localConnections.length == 0) {
+        updateStatsBox("There are no connections");
+	    return 0;
+    }
+
 	for (var i=0; i<localConnections.length;i++)
 	{
 		if (localConnections[i].sendChannel == undefined) {
@@ -241,11 +245,12 @@ function listConnections() {
 		} else {
 			datachannelState = localConnections[i].sendChannel.readyState; 
 		}
-		console.log( i + '# ' + 
-			'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
-			' Connection state: "' + datachannelState + '"' + 
-		' Key used: "' + localConnections[i].peerKey + '"');
-	}
+        statsText += "\n" + i + '# ' + 'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
+			'\nConnection state: "' + datachannelState + '"' + 
+		    '\nKey used: "' + localConnections[i].peerKey + '"';
+	}//Build stats output
+    updateStatsBox(statsText);
+
 }//End listConnectedPeers
 
 function getPeerIndexByCallSite(calledObj) {
@@ -292,3 +297,12 @@ function checkAlreadyConnectedToPeer(remotePeerIdentity)
     }
 		return false;
 }//End checkAlreadyConnectedToPeer(remotePeerIdentity)
+
+function updateStatsBox(value) {
+    var statsBox = document.getElementById('connectionStats');
+    if (!value)
+        var value = 'No connections';
+    statsBox.value = value;
+}//End updateStatsBox()
+//Update stats info every seccond
+window.setInterval(listConnections, 1000);
