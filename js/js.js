@@ -242,7 +242,7 @@ function listConnections() {
 			datachannelState = localConnections[i].sendChannel.readyState; 
 		}
 		console.log( i + '# ' + 
-			'Peer identity: "' +  localConnections[i].peerIdentity + '"' +
+			'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
 			' Connection state: "' + datachannelState + '"' + 
 		' Key used: "' + localConnections[i].peerKey + '"');
 	}
