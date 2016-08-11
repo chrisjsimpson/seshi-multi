@@ -233,6 +233,7 @@ function getPeerIndexByPollId(pollId){
 
 function listConnections() {
     var statsText= '';
+    var peers = [];
 	if (localConnections.length == 0) {
         updateStatsBox("There are no connections");
 	    return 0;
@@ -244,13 +245,17 @@ function listConnections() {
 			datachannelState = '(Datachannel not created yet.)';
 		} else {
 			datachannelState = localConnections[i].sendChannel.readyState; 
-		}
+            if ( localConnections[i].sendChannel.readyState == "open")
+            {
+                peers.push(localConnections[i].remotePeerIdentity);
+            }//End if datachannel is open, add it as a fully connected peer to peers[].
+		}// End get current datachannel state
         statsText += "\n" + i + '# ' + 'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
 			'\nConnection state: "' + datachannelState + '"' + 
 		    '\nKey used: "' + localConnections[i].peerKey + '"';
 	}//Build stats output
     updateStatsBox(statsText);
-
+    return peers;
 }//End listConnectedPeers
 
 function getPeerIndexByCallSite(calledObj) {
@@ -279,6 +284,8 @@ function setRemotePeerIdentity(peerIndex, remotePeerIdentity) {
    		localConnections[peerIndex].remotePeerIdentity = remotePeerIdentity;
         var numPeersElm = document.getElementById('numConnectedPeers');
         numPeersElm.textContent = parseInt(numPeersElm.textContent) + 1;
+        //Post peer list to connected peer
+        postPeersToRemotePeers();
 	} else {
 		//Disconnect this excess connection
 		localConnections[peerIndex].sendChannel.close();//Close Datachannel
@@ -306,3 +313,8 @@ function updateStatsBox(value) {
 }//End updateStatsBox()
 //Update stats info every seccond
 window.setInterval(listConnections, 1000);
+
+function postPeersToRemotePeers() {
+    var currentPeers = listConnections();
+    console.log(currentPeers);
+}//End postPeersToRemotePeer()
