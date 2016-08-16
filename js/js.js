@@ -202,7 +202,7 @@ function handleReceiveChannelStatusChange(event) {
     console.log(event);
     if (event.type == 'open') {
         var peerIndex = getPeerIndexByCallSite(this);
-        sendPeerIdentity(peerIndex, {"msgType":"setPeerIdentity", 'data':{"peerIdentity":peerIdentity}});
+        sendToPeer(peerIndex, {"msgType":"setPeerIdentity", 'data':{"peerIdentity":peerIdentity}});
     }
 };//End handleReceiveChannelStatusChange()
 
@@ -216,6 +216,10 @@ function handleReceiveMessage(event) {
         case 'setPeerIdentity':
             setRemotePeerIdentity(peerIndex, msg.data.peerIdentity);
         break;
+    
+        case 'peers':
+            alert('Got peers message');
+        break; 
         
         default:
             console.log("No handler for message recieved: " + msg);
@@ -247,7 +251,8 @@ function listConnections() {
 			datachannelState = localConnections[i].sendChannel.readyState; 
             if ( localConnections[i].sendChannel.readyState == "open")
             {
-                peers.push(localConnections[i].remotePeerIdentity);
+                peers.push({"peerIndex":i, 
+                            "peerId":localConnections[i].remotePeerIdentity});
             }//End if datachannel is open, add it as a fully connected peer to peers[].
 		}// End get current datachannel state
         statsText += "\n" + i + '# ' + 'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
@@ -272,10 +277,10 @@ function getPeerIndexByCallSite(calledObj) {
     }
 }//End getPeerIndexByCallSite
 
-function sendPeerIdentity(peerIndex, msg){
+function sendToPeer(peerIndex, msg){
     var msg = JSON.stringify(msg);
     localConnections[peerIndex].sendChannel.send(msg);
-}//end sendPeerIdentity
+}//end sendToPeer(peerIndex, msg)
 
 function setRemotePeerIdentity(peerIndex, remotePeerIdentity) {
     //Check we're not already connected to this remote peer
@@ -315,6 +320,15 @@ function updateStatsBox(value) {
 window.setInterval(listConnections, 1000);
 
 function postPeersToRemotePeers() {
-    var currentPeers = listConnections();
-    console.log(currentPeers);
+    var currentConnectedPeers = listConnections();
+    console.log(currentConnectedPeers);
+    //Loop through connected peers, sending all currently connected peers
+	for (var i=0; i<currentConnectedPeers.length;i++)
+    {
+        var msg = {
+            "msgType":"peers", 
+            'data':JSON.stringify(currentConnectedPeers)
+        }
+        sendToPeer(currentConnectedPeers[i].peerIndex, msg);
+    }//End loop though connected peers, sending all currently connected peers
 }//End postPeersToRemotePeer()
