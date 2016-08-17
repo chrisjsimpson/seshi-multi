@@ -21,6 +21,8 @@ function startup() {
     /* Startup() - Initial Setup & connect event listeners. */
     console.log("Starting up...");
     peerIdentity = Math.random() * (99999999999999999999 - 0) + 0;
+    //Show peer identity on screen
+    var peerIdentityElm = document.getElementById('peerIdentity').innerHTML = peerIdentity;
     connectPeerButton = document.getElementById('connectPeer');
     localConnections = []; //Array of local RTCPeerConnections
     config = {iceServers:new Array()};
@@ -218,9 +220,9 @@ function handleReceiveMessage(event) {
         break;
     
         case 'peers':
-            alert('Got peers message');
+            showGotPeers(msg);
         break; 
-        
+    
         default:
             console.log("No handler for message recieved: " + msg);
         
@@ -330,5 +332,12 @@ function postPeersToRemotePeers() {
             'data':JSON.stringify(currentConnectedPeers)
         }
         sendToPeer(currentConnectedPeers[i].peerIndex, msg);
+        console.log("Sending:");
+        console.log(msg);
     }//End loop though connected peers, sending all currently connected peers
 }//End postPeersToRemotePeer()
+
+function showGotPeers(msg) {
+    var gotPeersElm = document.getElementById('gotPeersMsg');
+    gotPeersElm.innerHTML = msg.data;
+}//End showGotPeers(msg)
