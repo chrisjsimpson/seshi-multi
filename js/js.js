@@ -253,8 +253,9 @@ function listConnections() {
 			datachannelState = localConnections[i].sendChannel.readyState; 
             if ( localConnections[i].sendChannel.readyState == "open")
             {
-                peers.push({"peerIndex":i, 
-                            "peerId":localConnections[i].remotePeerIdentity});
+                peers.push({"peerIndex":i,
+                            "peerIdentity":peerIdentity,
+                            "remotePeerId":localConnections[i].remotePeerIdentity});
             }//End if datachannel is open, add it as a fully connected peer to peers[].
 		}// End get current datachannel state
         statsText += "\n" + i + '# ' + 'Remote Peer identity: "' +  localConnections[i].remotePeerIdentity+ '"' +
@@ -339,5 +340,5 @@ function postPeersToRemotePeers() {
 
 function showGotPeers(msg) {
     var gotPeersElm = document.getElementById('gotPeersMsg');
-    gotPeersElm.innerHTML = msg.data;
+    gotPeersElm.innerHTML += "\n" + msg.data;
 }//End showGotPeers(msg)
