@@ -225,6 +225,7 @@ function handleReceiveMessage(event) {
     
         case 'peers':
             showGotPeers(msg);
+            connectNewPeers(msg);
         break; 
     
         default:
@@ -269,6 +270,23 @@ function listConnections() {
     updateStatsBox(statsText);
     return peers;
 }//End listConnectedPeers
+
+function isConnectedToPeer(remotePeerId) {
+  for(var i=0;i<localConnections.length;i++)
+  {
+    if ( localConnections[i].remotePeerIdentity == remotePeerId )
+    {
+      if (  localConnections[i].sendChannel.readyState == "open" )
+      {
+        return true; //This remotePeerId is connected
+      } else {
+        return false; //This remotePeerId is NOT connected
+      }
+    }
+  }//End loop through localConnections array.
+  
+  return false;
+}//End isConnectedToPeer(remotePeerId)
 
 function getPeerIndexByCallSite(calledObj) {
     /* When passed an RTCDataChannel event, this 
@@ -347,3 +365,41 @@ function showGotPeers(msg) {
     var gotPeersElm = document.getElementById('gotPeersMsg');
     gotPeersElm.innerHTML += "\n" + msg.data;
 }//End showGotPeers(msg)
+
+function connectNewPeers(remotePeers) {
+  console.log("connectNewPeers() called.");
+  var potentialPeersList = extractNewPeers(remotePeers);
+}//End connectNewPeers(remotePeers)
+
+function extractNewPeers(remotePeers) {
+  /*
+  * Extract potentially new peers to connect to from the 
+  * recently recieved peer list. 
+  * Strip out own peer identify (remote peers by default 
+  * send all peers they're conected to, this includes the currently 
+  * connected peer therefore the list contains the peers own
+  * peerIdentity which can be removed from the list (we aleady 
+  * know ourselves!).
+  *
+  * Returns array of remote peers, potentially reachable via
+  * a mutual peer (taken from src field of message) by using it as
+  * a signalling channel bridge to the other peer.
+  * @return array of remote peers.
+  */
+  console.log("extractNewPeers() called.");
+  var msgSrc = remotePeers.src;
+  var peerList = JSON.parse(remotePeers.data);
+  var potentialNewPeerList = {"src":msgSrc, peers:[]};
+  //Remove self (own peer identity)
+  for (var i=0;i<peerList.length;i++)
+  {
+    if(peerList[i].remotePeerId != peerIdentity)
+    {
+      //TODO Check not already connected to this peer 
+      // before pushing to array
+      potentialNewPeerList.peers.push(peerList[i].remotePeerId);
+      alert(msgSrc + " Told me about a potential new peer: " + peerList[i].remotePeerId);
+    }
+  }
+  return potentialNewPeerList;
+}//End extractNewPeers(remotePeers)
