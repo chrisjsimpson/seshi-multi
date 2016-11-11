@@ -204,7 +204,11 @@ function handleReceiveChannelStatusChange(event) {
     console.log(event);
     if (event.type == 'open') {
         var peerIndex = getPeerIndexByCallSite(this);
-        sendToPeer(peerIndex, {"msgType":"setPeerIdentity", 'data':{"peerIdentity":peerIdentity}});
+        sendToPeer(peerIndex, {
+                              "msgType":"setPeerIdentity", 
+                              "src":peerIdentity,
+                              "data":{"peerIdentity":peerIdentity}
+                              });
     }
 };//End handleReceiveChannelStatusChange()
 
@@ -330,6 +334,7 @@ function postPeersToRemotePeers() {
     {
         var msg = {
             "msgType":"peers", 
+            "src":peerIdentity,
             'data':JSON.stringify(currentConnectedPeers)
         }
         sendToPeer(currentConnectedPeers[i].peerIndex, msg);
