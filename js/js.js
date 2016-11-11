@@ -393,13 +393,16 @@ function extractNewPeers(remotePeers) {
   //Remove self (own peer identity)
   for (var i=0;i<peerList.length;i++)
   {
-    if(peerList[i].remotePeerId != peerIdentity)
+    if(peerList[i].remotePeerId != peerIdentity) //Ignore self
     {
-      //TODO Check not already connected to this peer 
-      // before pushing to array
-      potentialNewPeerList.peers.push(peerList[i].remotePeerId);
-      alert(msgSrc + " Told me about a potential new peer: " + peerList[i].remotePeerId);
-    }
+      //Check not already connected to this peer before pushing 
+      // to potentialNewPeerList array.
+      if ( !isConnectedToPeer(peerList[i].remotePeerId) )
+      { 
+        potentialNewPeerList.peers.push(peerList[i].remotePeerId);
+        alert(msgSrc + " Told me about a potential new peer: " + peerList[i].remotePeerId);
+      }
+    }//End ignore self
   }
   return potentialNewPeerList;
 }//End extractNewPeers(remotePeers)
